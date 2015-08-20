@@ -24,6 +24,8 @@ def init():
         yield from parser.task
 
     app.addon.register_event('install', _send_welcome)
+
+
 app.add_hook('before_first_request', init)
 
 
@@ -32,8 +34,8 @@ app.add_hook('before_first_request', init)
 def capabilities(request, response):
     return {
         "links": {
-            "self":         app.config.get("BASE_URL"),
-            "homepage":     app.config.get("BASE_URL")
+            "self": app.config.get("BASE_URL"),
+            "homepage": app.config.get("BASE_URL")
         },
         "key": app.config.get("PLUGIN_KEY"),
         "name": app.config.get("ADDON_NAME"),
@@ -127,7 +129,6 @@ def create_webhook_pattern(alias):
 
 
 def _create_parser(client):
-
     @asyncio.coroutine
     def list_aliases(_):
         aliases = yield from find_all_alias(app.addon, client)
@@ -175,6 +176,56 @@ def _create_parser(client):
             return "Problem registering webhook"
 
     @asyncio.coroutine
+    def add_to(args):
+        alias_text = args.alias
+
+        existing_alias = yield from find_alias(app.addon, client, alias_text)
+        if not existing_alias:
+            return "The alias you're trying to update ({}) to does not exists. BETTER MESSAGE HERE".format(alias_text)
+
+        new_mentions = args.mentions
+
+        try:
+            for item in new_mentions:
+                validate_mention_name(item)
+        except ValueError as e:
+            return str(e)
+
+        existing_alias['mentions'] = list(set(existing_alias['mentions'] + new_mentions))
+
+        spec = {
+            "client_id": client.id,
+            "group_id": client.group_id,
+            "capabilities_url": client.capabilities_url,
+            "alias": alias_text
+        }
+
+        yield from _aliases_db(app.addon).update(spec, existing_alias)
+        return "Added {} to {}".format(', '.join(new_mentions), alias_text)
+
+    @asyncio.coroutine
+    def delete_from(args):
+        alias_text = args.alias
+
+        existing_alias = yield from find_alias(app.addon, client, alias_text)
+        if not existing_alias:
+            return "The alias you're trying to update ({}) to does not exists. BETTER MESSAGE HERE".format(alias_text)
+
+        for m in args.mentions:
+            if m in existing_alias['mentions']:
+                existing_alias['mentions'].remove(m)
+
+        spec = {
+            "client_id": client.id,
+            "group_id": client.group_id,
+            "capabilities_url": client.capabilities_url,
+            "alias": alias_text
+        }
+
+        yield from _aliases_db(app.addon).update(spec, existing_alias)
+        return "Removed {} from {}".format(', '.join(args.mentions), alias_text)
+
+    @asyncio.coroutine
     def remove_alias(args):
         try:
             validate_mention_name(args.alias)
@@ -218,6 +269,18 @@ def _create_parser(client):
 
     parser_show = subparsers.add_parser('show', help='Shows the names for an existing alias', handler=show_alias)
     parser_show.add_argument('alias', metavar='@ALIAS', type=str, help='The mention alias, beginning with an "@"')
+
+    parser_add_to = subparsers.add_parser('add_to', help='Add a mention to an existing alias', handler=add_to)
+    parser_add_to.add_argument('alias', metavar='@ALIAS', type=str, help='The mention alias, beginning with an "@"')
+    parser_add_to.add_argument('mentions', metavar='@MENTION', nargs='+', type=str,
+                               help='The mention names, beginning with an "@"')
+
+    parser_delete_from = subparsers.add_parser('delete_from', help='Remove a mention from an existing alias',
+                                               handler=delete_from)
+    parser_delete_from.add_argument('alias', metavar='@ALIAS', type=str,
+                                    help='The mention alias, beginning with an "@"')
+    parser_delete_from.add_argument('mentions', metavar='@MENTION', nargs='+', type=str,
+                                    help='The mention names, beginning with an "@"')
 
     return parser
 

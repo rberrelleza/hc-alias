@@ -11,3 +11,5 @@ asyncio==0.4.1
 # asyncio-mongo>=0.2.3
 git+https://bitbucket.org/mrdon/asyncio-mongo.git@924825d6b450feed83f4bb266a4512c0037956c5#egg=asyncio-mongo
 gunicorn==18.0
+pytest
+pytest-cov
