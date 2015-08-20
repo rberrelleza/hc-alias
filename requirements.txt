@@ -1,7 +1,7 @@
-git+git://github.com/mrdon/bottle.git
-git+https://bitbucket.org/atlassianlabs/bottle-ac.git@master#egg=fuckyouheroku
+git+git://github.com/mrdon/bottle.git@f92cb700cb87941ea7184bef4989a6a808e7ba07
+git+https://bitbucket.org/atlassianlabs/bottle-ac.git@c6d47bcd1d83261549e8a2fac62f6bafad4415f7#egg=bottle-ac
 # Use asyncio-redis fork bad handling of connection timeouts, todo: update as fixed
-git+git://github.com/mrdon/asyncio-redis.git#egg=asyncio-redis_mrdon
+git+git://github.com/mrdon/asyncio-redis.git@30213f08f126ce154fbe3261955a23d3474a8415#egg=asyncio-redis
 Jinja2==2.7.2
 MarkupSafe==0.18
 PyJWT==0.1.9
@@ -9,5 +9,5 @@ aiohttp==0.6.4
 asyncio==0.4.1
 # Use master until this stablizes
 # asyncio-mongo>=0.2.3
-git+https://bitbucket.org/mrdon/asyncio-mongo.git#egg=asyncio-mongo_mrdon
+git+https://bitbucket.org/mrdon/asyncio-mongo.git@924825d6b450feed83f4bb266a4512c0037956c5#egg=asyncio-mongo
 gunicorn==18.0
