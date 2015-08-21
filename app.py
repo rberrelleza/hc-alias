@@ -309,8 +309,6 @@ def _create_parser(client):
 
     return parser
 
-app.router.add_static('/static', os.path.join(os.path.dirname(__file__), 'static'), name='static')
-
 def _aliases_db(addon):
     return addon.mongo_db.default_database['aliases']
 
