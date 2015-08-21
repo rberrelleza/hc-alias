@@ -234,6 +234,18 @@ def find_all_alias(client):
     return results
 
 
+@asyncio.coroutine
+def find_aliases_for_room(request):
+    room_id = int(request.match_info['room_id'])
+    results = yield from _aliases_db().find({'room_id': room_id})
+    resp_body = {}
+    if results:
+        for item in results:
+            resp_body[item['alias']] = item['mentions']
+
+    return web.Response(text=json.dumps(resp_body), content_type='application/json')
+
+
 def create_webhook_pattern(alias):
     return "(?:(?:^[^/]|\/[^a]|\/a[^l]|\/ali[^a]|\/alia[^s]).*|^)%s(?:$| ).*" % alias
 
@@ -446,3 +458,4 @@ app.router.add_route('GET', '/alias_list', get_alias_list)
 app.router.add_route('POST', '/alias', alias)
 app.router.add_route('POST', '/mention/{alias_name}', mention)
 app.router.add_route('POST', '/create', create_mention)
+app.router.add_route('GET', '/room/{room_id}/alias', find_aliases_for_room)
