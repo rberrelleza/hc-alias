@@ -22,7 +22,7 @@
 <div class="alias-list toggle">
     <ul class="aliases">
         {% for alias in aliases %}
-        <li class="">
+        <li data-alias="{{ alias['alias'] }}" data-mentions="{{ alias['mentions'] }}">
             {% include('_alias.html') %}
         </li>
         {% endfor %}

@@ -8,7 +8,10 @@ $('.spy a.aui-inline-dialog-trigger, .alias-list a.aui-inline-dialog-trigger, a.
 
 $('ul.aliases li').on('click', function(e) {
     toggleHidden();
-
+    var alias = $(e.currentTarget).data().alias;
+    var mentions = JSON.parse($(e.currentTarget).data().mentions.replace(/'/g, '"'));
+    $('input#alias-name').val(alias);
+    AJS.$("#select2-users").val(mentions).trigger('change');
 });
 
 (function () {
