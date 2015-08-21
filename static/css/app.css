@@ -13,6 +13,6 @@ html, body {
     margin: 20px auto;
     display: inherit;
 }
-.spy h3 {
-    margin-top: 0;
+.spy a {
+    cursor: pointer;
 }
