@@ -3,7 +3,7 @@ Markdown==2.6.2
 MarkupSafe==0.23
 PyJWT==1.4.0
 aiohttp==0.17.2
--e git+https://bitbucket.org/sronderos/aiohttp_ac_hipchat.git@shipit-32#egg=aiohttp_ac_hipchat
+git+https://bitbucket.org/sronderos/aiohttp_ac_hipchat.git@shipit-32#egg=aiohttp_ac_hipchat
 aiohttp_jinja2==0.5.0
 aioredis==0.2.2
 arrow==0.6.0
