@@ -4,7 +4,7 @@ function toggleHidden(e) {
     $('.toggle').toggleClass('hidden');
 }
 
-$('.spy a.aui-inline-dialog-trigger, .alias-list a.aui-inline-dialog-trigger, a.cancel').on('click', toggleHidden);
+$('.spy a.aui-inline-dialog-trigger, .alias-list a.aui-inline-dialog-trigger, ul.aliases li, a.cancel').on('click', toggleHidden);
 
 (function () {
 
@@ -30,6 +30,7 @@ $('.spy a.aui-inline-dialog-trigger, .alias-list a.aui-inline-dialog-trigger, a.
             }),
             success: function() {
                 toggleHidden();
+                window.location.reload();
             }
         });
     });

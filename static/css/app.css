@@ -16,6 +16,9 @@ html, body {
 
 .spy a, .alias-list a {
     cursor: pointer;
+    padding: 5px;
+    margin-top: 5px;
+    display: block;
 }
 
 ul {
@@ -26,16 +29,31 @@ ul {
 
 ul.aliases > li {
     border: solid thin #cccccc;
+    border-left: none;
     display: flex;
     flex-direction: row;
     align-items: center;
     padding: 7px;
     border-top: 0;
     border-right: 0;
+    cursor: pointer;
 }
 
-header {
-    font-size: 2em;
+ul.aliases > li:hover h4 {
+    color: #3B73AF;
+}
+
+h4 {
+    color: #666;
+    float:left;
+}
+
+div.alias {
+    width: 100%;
+}
+
+div.mentions {
+    float:right;
 }
 
 ul.mentions > li {
@@ -44,6 +62,10 @@ ul.mentions > li {
     padding: 0;
     border-top: 0;
     border-right: 0;
+}
+
+ul.mentions > li > .mention {
+    color: #666;
 }
 form {
     padding: 10px;
