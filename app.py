@@ -263,7 +263,8 @@ def _create_parser(client):
             }
             data = {
                 'mentions': args.mentions,
-                'webhook_url': webhook_url
+                'webhook_url': webhook_url,
+                'room_id': args.room
             }
             if existing:
                 existing.update(data)
