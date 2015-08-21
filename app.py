@@ -7,7 +7,7 @@ import aiohttp_jinja2
 import jinja2
 from aiohttp_ac_hipchat.addon import create_addon_app
 from aiohttp_ac_hipchat.addon import require_jwt
-from aiohttp_ac_hipchat.util import allow_cross_origin
+from aiohttp_ac_hipchat.util import allow_cross_origin, http_request
 from aiohttp_ac_hipchat.webhook import RoomNotificationArgumentParser, HtmlNotification
 
 
@@ -62,6 +62,7 @@ def capabilities(request):
             "hipchatApiConsumer": {
                 "scopes": [
                     "view_group",
+                    "view_room",
                     "send_notification",
                     "admin_room"
                 ],
@@ -112,6 +113,15 @@ def get_glance(request):
 
 
 @asyncio.coroutine
+def update_glance(app, client, room):
+    aliases = yield from find_all_alias(app, client)
+    yield from push_glance_update(app, client, room, {
+        "glance": [{
+            "key": GLANCE_MODULE_KEY,
+            "content": glance_json(len(aliases))
+        }]
+    })
+
 def glance_json(count):
     return {
         "label": {
@@ -126,6 +136,22 @@ def glance_json(count):
             }
         }
     }
+
+@asyncio.coroutine
+def push_glance_update(app, client, room_id_or_name, glance):
+    token = yield from client.get_token(app['redis_pool'], scopes=['view_room'])
+    with (yield from http_request('POST', "%s/addon/ui/room/%s" % (client.api_base_url, room_id_or_name),
+                                  headers={'content-type': 'application/json',
+                                           'authorization': 'Bearer %s' % token},
+                                  data=json.dumps(glance),
+                                  timeout=10)) as resp:
+        if resp.status == 200:
+            body = yield from resp.read(decode=True)
+            return body['items']
+        else:
+            log.error(resp.status)
+            body = yield from resp.read()
+            log.error(body)
 
 @asyncio.coroutine
 @require_jwt(app)
@@ -245,6 +271,7 @@ def _create_parser(client):
             else:
                 data.update(spec)
                 yield from aliases.insert(data)
+                yield from update_glance(app, client, args.room)
             return "Alias %s added" % args.alias
         else:
             return "Problem registering webhook"
@@ -329,6 +356,7 @@ def _create_parser(client):
             return "Alias %s not found" % args.alias
 
     parser = RoomNotificationArgumentParser(app, "/alias", client)
+    parser.add_argument('room', type=int)
     subparsers = parser.add_subparsers(help='Available commands')
 
     subparsers.add_parser('list', help='List existing aliases', handler=list_aliases)
