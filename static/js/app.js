@@ -17,4 +17,18 @@ $('.spy a.aui-inline-dialog-trigger, .alias-list a.aui-inline-dialog-trigger, a.
         });
     });
 
+    $('form').on('submit', function (e) {
+        e.stopPropagation();
+        e.preventDefault();
+        $.ajax({
+            type: 'POST',
+            url: '/create',
+            data: JSON.stringify({
+                alias: $('input#alias-name').val(),
+                mentions: $('#select2-users').val(),
+                room: $('input#room').val()
+            })
+        });
+    });
+
 })();
