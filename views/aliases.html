@@ -18,23 +18,29 @@
 
 </head>
 <body class="">
-    {% if aliases %}
-    <ul class="aliases toggle">
+{% if aliases %}
+<div class="alias-list toggle">
+    <ul class="aliases">
         {% for alias in aliases %}
         <li class="">
             {% include('_alias.html') %}
         </li>
         {% endfor %}
     </ul>
-    {% else %}
-    <div class="spy toggle">
-        <img src="static/Spy.png"/>
-        <a class="aui-nav-item aui-inline-dialog-trigger">
-            <span class="aui-icon aui-icon-small aui-iconfont-add-small"></span>
-            <span class="add-alias">Add an alias</span>
-        </a>
-    </div>
-    {% endif %}
+    <a class="aui-nav-item aui-inline-dialog-trigger">
+        <span class="aui-icon aui-icon-small aui-iconfont-add-small"></span>
+        <span class="add-alias">Add an alias</span>
+    </a>
+</div>
+{% else %}
+<div class="spy toggle">
+    <img src="static/Spy.png"/>
+    <a class="aui-nav-item aui-inline-dialog-trigger">
+        <span class="aui-icon aui-icon-small aui-iconfont-add-small"></span>
+        <span class="add-alias">Add an alias</span>
+    </a>
+</div>
+{% endif %}
 
 
 <form class="aui top-label hidden toggle">

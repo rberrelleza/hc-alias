@@ -4,4 +4,4 @@ function toggleHidden(e) {
     $('.toggle').toggleClass('hidden');
 }
 
-$('.spy a.aui-inline-dialog-trigger, a.cancel').on('click', toggleHidden);
+$('.spy a.aui-inline-dialog-trigger, .alias-list a.aui-inline-dialog-trigger, a.cancel').on('click', toggleHidden);
