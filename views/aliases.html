@@ -7,22 +7,18 @@
     <link rel="stylesheet" href="//aui-cdn.atlassian.com/aui-adg/5.8.14/css/aui.css" media="all">
     <link rel="stylesheet" href="static/css/app.css" media="all">
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+    <script src="static/lib/almond.js"></script>
+    <link rel="stylesheet" href="//aui-cdn.atlassian.com/aui-adg/5.8.14/css/aui-experimental.css" media="all">
     <script src="//aui-cdn.atlassian.com/aui-adg/5.8.14/js/aui.js"></script>
-
-    <script src="//cdnjs.cloudflare.com/ajax/libs/URI.js/1.16.0/URI.min.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/spin.js/2.3.2/spin.min.js"></script>
-    <script src="static/lib/jquery.spin.js"></script>
-
-    <script src="static/lib/iframe.min.js"></script>
-    <script src="static/js/app.js"></script>
-
+    <script src="//aui-cdn.atlassian.com/aui-adg/5.8.14/js/aui-experimental.js"></script>
+    <script src="//aui-cdn.atlassian.com/aui-adg/5.8.14/js/aui-soy.js"></script>
     <meta name="acpt" content="{{ signed_request }}">
     <meta name="base-url" content="{{ base_url }}">
 
 </head>
 <body class="">
     {% if aliases %}
-    <ul class="aliases">
+    <ul class="aliases toggle">
         {% for alias in aliases %}
         <li class="">
             {% include('_alias.html') %}
@@ -30,7 +26,7 @@
         {% endfor %}
     </ul>
     {% else %}
-    <div class="spy">
+    <div class="spy toggle">
         <img src="static/Spy.png"/>
         <a class="aui-nav-item aui-inline-dialog-trigger">
             <span class="aui-icon aui-icon-small aui-iconfont-add-small"></span>
@@ -38,5 +34,34 @@
         </a>
     </div>
     {% endif %}
+
+
+<form class="aui top-label hidden toggle">
+    <fieldset class="top-label">
+        <div class="field-group top-label">
+            <label for="alias-name">Alias name</label>
+            <input class="text" type="text" id="alias-name" name="alias-name"
+                   placeholder="@alias">
+        </div>
+        <div class="field-group top-label">
+            <label for="users">Users</label>
+            <select id="select2-users" multiple="">
+                <option value="CONF">Confluence</option>
+                <option value="JIRA">JIRA</option>
+                <option value="BAM">Bamboo</option>
+                <option value="JAG">JIRA Agile</option>
+                <option value="CAP">JIRA Capture</option>
+                <option value="AUI">AUI</option>
+            </select>
+        </div>
+        <div class="buttons-container">
+            <div class="buttons">
+                <input class="button submit" type="submit" value="Save" id="save-alias">
+                <a class="cancel">Cancel</a>
+            </div>
+        </div>
+    </fieldset>
+</form>
+<script src="static/js/app.js"></script>
 </body>
 </html>

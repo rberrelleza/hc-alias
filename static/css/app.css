@@ -45,3 +45,6 @@ ul.mentions > li {
     border-top: 0;
     border-right: 0;
 }
+form {
+    padding: 10px;
+}
