@@ -1,0 +1,15 @@
+<div class="alias" data-user-id="{{ alias['alias'] }}">
+    <header>
+        <span class="aui-avatar aui-avatar-medium">
+            <img src="{{ alias.get('avatar', '/static/at.png') }}">
+        </span>
+        {{ alias['alias'] }}
+    </header>
+    <div class="mentions">
+        <ul class="mentions">
+            {% for mention in alias['mentions'] %}
+            <li class="mention">{{ mention }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>

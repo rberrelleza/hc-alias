@@ -13,6 +13,36 @@ html, body {
     margin: 20px auto;
     display: inherit;
 }
+
 .spy a {
     cursor: pointer;
 }
+
+ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+ul.aliases > li {
+    border: solid thin #cccccc;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 7px;
+    border-top: 0;
+    border-right: 0;
+}
+
+header {
+    font-size: 2em;
+}
+
+ul.mentions > li {
+    display: inline-flex;
+    flex-direction: row;
+    padding: 0;
+    border-top: 0;
+    border-right: 0;
+}
+>>>>>>> populate alias_list view with aliases

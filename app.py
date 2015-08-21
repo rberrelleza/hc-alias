@@ -114,7 +114,7 @@ def get_glance(request):
 @asyncio.coroutine
 @require_jwt(app)
 @allow_cross_origin
-@aiohttp_jinja2.template('aliases.jinja2')
+@aiohttp_jinja2.template('aliases.html')
 def get_alias_list(request):
     aliases = yield from find_all_alias(app, request.client)
     """
