@@ -65,6 +65,31 @@ def capabilities(request, response):
                     "pattern": "^/alias(\s|$).*"
                 }
             ],
+            "glance": [
+                {
+                    "key": "hcalias.glance",
+                    "name": {
+                        "value": "Alias"
+                    },
+                    "queryUrl": app.config.get("BASE_URL") + "/glance",
+                    "target": "hcalias.sidebar",
+                    "icon": {
+                        "url": app.config.get("BASE_URL") + "/static/info.png",
+                        "url@2x": app.config.get("BASE_URL") + "/static/info@2x.png"
+                    }
+                }
+            ]
+        }
+    }
+
+
+@app.route('/glance', method='GET')
+@asyncio.coroutine
+def get_glance(request):
+    return {
+        "label": {
+            "type": "html",
+            "value": "<strong>Hi</strong> Alias"
         }
     }
 
