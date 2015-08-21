@@ -108,8 +108,24 @@ def capabilities(request):
 @allow_cross_origin
 def get_glance(request):
     aliases = yield from find_all_alias(app, request.client)
-    return aiohttp_jinja2.render_template('glance.json', request, {'count': len(aliases)})
+    return web.Response(text=json.dumps(glance_json(len(aliases))))
 
+
+@asyncio.coroutine
+def glance_json(count):
+    return {
+        "label": {
+            "type": "html",
+            "value": "Alias"
+        },
+        "status": {
+            "type": "lozenge",
+            "value": {
+                "label": "{}".format(count),
+                "type": "complete"
+            }
+        }
+    }
 
 @asyncio.coroutine
 @require_jwt(app)
