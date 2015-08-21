@@ -28,9 +28,9 @@ def init(app):
     def _send_welcome(event):
         client = event['client']
         yield from client.send_notification(app['addon'], text="HC Alias was added to this room")
-        # parser = _create_parser(client)
-        # parser.send_usage()
-        # yield from parser.task
+        parser = _create_parser(client)
+        parser.send_usage()
+        yield from parser.task
 
     app['addon'].register_event('install', _send_welcome)
 
