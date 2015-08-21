@@ -132,7 +132,7 @@ def glance_json(count):
             "type": "lozenge",
             "value": {
                 "label": "{}".format(count),
-                "type": "complete"
+                "type": "success"
             }
         }
     }
@@ -337,6 +337,7 @@ def _create_parser(client):
         if existing and 'webhook_url' in existing:
             yield from client.delete_webhook(app['addon'], existing['webhook_url'])
             yield from _aliases_db(app).remove(existing)
+            yield from update_glance(app, client, args.room)
             return "Alias %s deleted" % args.alias
         else:
             return "Alias %s not found" % args.alias
