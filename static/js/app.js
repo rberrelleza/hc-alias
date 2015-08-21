@@ -4,7 +4,12 @@ function toggleHidden(e) {
     $('.toggle').toggleClass('hidden');
 }
 
-$('.spy a.aui-inline-dialog-trigger, .alias-list a.aui-inline-dialog-trigger, ul.aliases li, a.cancel').on('click', toggleHidden);
+$('.spy a.aui-inline-dialog-trigger, .alias-list a.aui-inline-dialog-trigger, a.cancel').on('click', toggleHidden);
+
+$('ul.aliases li').on('click', function(e) {
+    toggleHidden();
+
+});
 
 (function () {
 
