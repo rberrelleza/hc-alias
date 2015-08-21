@@ -236,7 +236,7 @@ def find_all_alias(client):
 
 @asyncio.coroutine
 def find_aliases_for_room(request):
-    room_id = int(request.match_info['room_id'])
+    room_id = str(request.match_info['room_id'])
     results = yield from _aliases_db().find({'room_id': room_id})
     resp_body = {}
     if results:
