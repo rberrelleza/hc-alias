@@ -24,9 +24,6 @@ app = create_addon_app(plugin_key="hc-alias",
                        addon_name="HC Alias",
                        from_name="Alias")
 
-# app['config']['MONGO_URL'] = os.environ.get("MONGO_URL", None)
-# app.config['REDIS_URL'] = os.environ.get("REDISTOGO_URL", None)
-
 aiohttp_jinja2.setup(app, autoescape=True,
                      loader=jinja2.FileSystemLoader(os.path.join(os.path.dirname(__file__), 'views')))
 
@@ -36,7 +33,7 @@ def init(app):
     @asyncio.coroutine
     def _send_welcome(event):
         client = event['client']
-        yield from client.send_notification(app.addon, text="HC Alias was added to this room")
+        yield from client.send_notification(app['addon'], text="HC Alias was added to this room")
         # parser = _create_parser(client)
         # parser.send_usage()
         # yield from parser.task
@@ -96,6 +93,16 @@ def capabilities(request):
                         "url@2x": base_url + "/static/at@2x.png"
                     }
                 }
+            ],
+            "webPanel": [
+                {
+                    "key": "hcalias.sidebar",
+                    "name": {
+                        "value": "Alias reports"
+                    },
+                    "location": "hipchat.sidebar.right",
+                    "url": base_url + "/alias_list"
+                }
             ]
         }
     }))
@@ -103,13 +110,20 @@ def capabilities(request):
 
 
 @asyncio.coroutine
+@require_jwt(app)
+@allow_cross_origin
 def get_glance(request):
-    return {
-        "label": {
-            "type": "html",
-            "value": "<strong>Hi</strong> Alias"
-        }
-    }
+    aliases = yield from find_all_alias(app, request.client)
+    return aiohttp_jinja2.render_template('glance.json', request, {'count': len(aliases)})
+
+
+@asyncio.coroutine
+@require_jwt(app)
+@allow_cross_origin
+def get_alias_list(request):
+    aliases = yield from find_all_alias(app, request.client)
+    return aiohttp_jinja2.render_template('glance.json', request, {'count': len(aliases)})
+
 
 
 # @app.route('/alias', method='POST')
@@ -157,14 +171,14 @@ def get_glance(request):
 #     return result
 #
 #
-# @asyncio.coroutine
-# def find_all_alias(addon, client):
-#     results = yield from _aliases_db(addon).find({
-#         "client_id": client.id,
-#         "group_id": client.group_id,
-#         "capabilities_url": client.capabilities_url
-#     })
-#     return results
+@asyncio.coroutine
+def find_all_alias(addon, client):
+    results = yield from _aliases_db(addon).find({
+        "client_id": client.id,
+        "group_id": client.group_id,
+        "capabilities_url": client.capabilities_url
+    })
+    return results
 #
 #
 # def create_webhook_pattern(alias):
@@ -335,6 +349,7 @@ def _aliases_db(addon):
 app.router.add_static('/static', os.path.join(os.path.dirname(__file__), 'static'), name='static')
 app.router.add_route('GET', '/', capabilities)
 app.router.add_route('GET', '/glance', get_glance)
+app.router.add_route('GET', '/alias_list', get_alias_list)
 # app.router.add_route('POST', '/standup', standup_webhook)
 # app.router.add_route('GET', '/report', report_view)
 # app.router.add_route('GET', '/dialog', create_new_report_view)

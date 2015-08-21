@@ -1,0 +1,6 @@
+{
+  "label": {
+    "type": "html",
+    "value": "<strong>Alias</strong> {{ count }}"
+  }
+}
