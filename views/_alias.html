@@ -1,10 +1,12 @@
-<div class="alias" data-user-id="{{ alias['alias'] }}">
+<div class="alias">
     <h4>
         {{ alias['alias'] }}
     </h4>
     <div class="mentions">
         <ul class="mentions">
-            <li class="mention">{{ alias['mentions']|length }} {{ "people" if alias['mentions']|length > 1 else "person" }}</li>
+            <li class="mention" data-alias="{{ alias['alias'] }}" data-mentions="{{ alias['mentions'] }}">
+                {{ alias['mentions']|length }} {{ "people" if alias['mentions']|length > 1 else "person" }}
+            </li>
         </ul>
     </div>
 </div>
