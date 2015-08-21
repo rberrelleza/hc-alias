@@ -27,7 +27,10 @@ $('.spy a.aui-inline-dialog-trigger, .alias-list a.aui-inline-dialog-trigger, a.
                 alias: $('input#alias-name').val(),
                 mentions: $('#select2-users').val(),
                 room: $('input#room').val()
-            })
+            }),
+            success: function() {
+                toggleHidden();
+            }
         });
     });
 
