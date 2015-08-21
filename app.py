@@ -74,8 +74,8 @@ def capabilities(request, response):
                     "queryUrl": app.config.get("BASE_URL") + "/glance",
                     "target": "hcalias.sidebar",
                     "icon": {
-                        "url": app.config.get("BASE_URL") + "/static/info.png",
-                        "url@2x": app.config.get("BASE_URL") + "/static/info@2x.png"
+                        "url": app.config.get("BASE_URL") + "/static/at.png",
+                        "url@2x": app.config.get("BASE_URL") + "/static/at@2x.png"
                     }
                 }
             ]
@@ -309,6 +309,7 @@ def _create_parser(client):
 
     return parser
 
+app.router.add_static('/static', os.path.join(os.path.dirname(__file__), 'static'), name='static')
 
 def _aliases_db(addon):
     return addon.mongo_db.default_database['aliases']
