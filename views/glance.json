@@ -1,6 +1,13 @@
 {
   "label": {
     "type": "html",
-    "value": "<strong>Alias</strong> {{ count }}"
+    "value": "Alias"
+  },
+  "status": {
+    "type": "lozenge",
+    "value": {
+      "label": "{{ count }}",
+      "type": "current"
+    }
   }
 }

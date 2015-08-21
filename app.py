@@ -98,7 +98,7 @@ def capabilities(request):
                 {
                     "key": "hcalias.sidebar",
                     "name": {
-                        "value": "Alias reports"
+                        "value": "Aliases"
                     },
                     "location": "hipchat.sidebar.right",
                     "url": base_url + "/alias_list"
@@ -120,9 +120,15 @@ def get_glance(request):
 @asyncio.coroutine
 @require_jwt(app)
 @allow_cross_origin
+@aiohttp_jinja2.template('aliases.jinja2')
 def get_alias_list(request):
     aliases = yield from find_all_alias(app, request.client)
-    return aiohttp_jinja2.render_template('glance.json', request, {'count': len(aliases)})
+    """
+        Render the report view
+    """
+    return {
+        "aliases": aliases
+    }
 
 
 

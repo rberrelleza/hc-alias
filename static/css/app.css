@@ -1,0 +1,18 @@
+html, body {
+    background-color: #fff;
+    height: 100%;
+}
+
+.spy {
+    vertical-align: middle;
+    text-align: center;
+}
+.spy img {
+    width: 111px;
+    height: auto;
+    margin: 20px auto;
+    display: inherit;
+}
+.spy h3 {
+    margin-top: 0;
+}
