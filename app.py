@@ -10,7 +10,6 @@ from aiohttp_ac_hipchat.addon import require_jwt
 from aiohttp_ac_hipchat.util import allow_cross_origin, http_request
 from aiohttp_ac_hipchat.webhook import RoomNotificationArgumentParser, HtmlNotification
 
-
 GLANCE_MODULE_KEY = "hcalias.glance"
 
 log = logging.getLogger(__name__)
@@ -108,14 +107,14 @@ def capabilities(request):
 @require_jwt(app)
 @allow_cross_origin
 def get_glance(request):
-    aliases = yield from find_all_alias(app, request.client)
+    aliases = yield from find_all_alias(request.client)
     return web.Response(text=json.dumps(glance_json(len(aliases))))
 
 
 @asyncio.coroutine
-def update_glance(app, client, room):
-    aliases = yield from find_all_alias(app, client)
-    yield from push_glance_update(app, client, room, {
+def update_glance(client, room):
+    aliases = yield from find_all_alias(client)
+    yield from push_glance_update(client, room, {
         "glance": [{
             "key": GLANCE_MODULE_KEY,
             "content": glance_json(len(aliases))
@@ -138,34 +137,45 @@ def glance_json(count):
     }
 
 @asyncio.coroutine
-def push_glance_update(app, client, room_id_or_name, glance):
+def push_glance_update(client, room_id_or_name, glance):
     token = yield from client.get_token(app['redis_pool'], scopes=['view_room'])
     with (yield from http_request('POST', "%s/addon/ui/room/%s" % (client.api_base_url, room_id_or_name),
                                   headers={'content-type': 'application/json',
                                            'authorization': 'Bearer %s' % token},
                                   data=json.dumps(glance),
                                   timeout=10)) as resp:
-        if resp.status == 200:
-            body = yield from resp.read(decode=True)
-            return body['items']
+        if resp.status == 204:
+            log.debug('Glance update pushed')
         else:
             log.error(resp.status)
             body = yield from resp.read()
             log.error(body)
+
 
 @asyncio.coroutine
 @require_jwt(app)
 @allow_cross_origin
 @aiohttp_jinja2.template('aliases.html')
 def get_alias_list(request):
-    aliases = yield from find_all_alias(app, request.client)
-    """
-        Render the report view
-    """
+    aliases = yield from find_all_alias(request.client)
+
     return {
-        "aliases": aliases
+        "aliases": aliases,
+        "signed_request": request.signed_request,
+        "room": request.client.room_id
     }
 
+
+@asyncio.coroutine
+@require_jwt(app)
+@allow_cross_origin
+def create_mention(request):
+    data = yield from request.json()
+    success = yield from set_alias(request.client, data['room'], data['alias'], data['mentions'])
+    if success:
+        return web.Response(status=204)
+    else:
+        return web.Response(status=500, text="Failed to set alias")
 
 @asyncio.coroutine
 def alias(request):
@@ -188,7 +198,7 @@ def mention(request):
     client_id = body['oauth_client_id']
     client = yield from addon.load_client(client_id)
 
-    existing = yield from find_alias(app, client, alias_name)
+    existing = yield from find_alias(client, alias_name)
     if existing:
         mentions = existing['mentions']
 
@@ -204,8 +214,8 @@ def mention(request):
 
 
 @asyncio.coroutine
-def find_alias(app, client, name):
-    result = yield from _aliases_db(app).find_one({
+def find_alias(client, name):
+    result = yield from _aliases_db().find_one({
         "client_id": client.id,
         "group_id": client.group_id,
         "capabilities_url": client.capabilities_url,
@@ -215,8 +225,8 @@ def find_alias(app, client, name):
 
 
 @asyncio.coroutine
-def find_all_alias(app, client):
-    results = yield from _aliases_db(app).find({
+def find_all_alias(client):
+    results = yield from _aliases_db().find({
         "client_id": client.id,
         "group_id": client.group_id,
         "capabilities_url": client.capabilities_url
@@ -228,60 +238,69 @@ def create_webhook_pattern(alias):
     return "(?:(?:^[^/]|\/[^a]|\/a[^l]|\/ali[^a]|\/alia[^s]).*|^)%s(?:$| ).*" % alias
 
 
+@asyncio.coroutine
+def set_alias(client, room, alias_name, mentions):
+    try:
+        for item in mentions + [alias_name]:
+            validate_mention_name(item)
+    except ValueError as e:
+        return str(e)
+
+    existing = yield from find_alias(client, alias_name)
+    if existing and 'webhook_url' in existing:
+        yield from client.delete_webhook(app['addon'], existing['webhook_url'])
+
+    webhook_url = yield from client.post_webhook(app['addon'],
+                                                 url="%s/mention/%s" % (app['config']['BASE_URL'], alias_name),
+                                                 pattern=create_webhook_pattern(alias_name),
+                                                 name="Alias {}".format(alias_name))
+    if webhook_url:
+        aliases = _aliases_db()
+        spec = {
+            "client_id": client.id,
+            "group_id": client.group_id,
+            "capabilities_url": client.capabilities_url,
+            "alias": alias_name
+        }
+        data = {
+            'mentions': mentions,
+            'webhook_url': webhook_url,
+            'room_id': room
+        }
+        if existing:
+            existing.update(data)
+            yield from aliases.update(spec, existing)
+        else:
+            data.update(spec)
+            yield from aliases.insert(data)
+            yield from update_glance(client, room)
+        return True
+    else:
+        return False
+
 def _create_parser(client):
     @asyncio.coroutine
     def list_aliases(_):
-        aliases = yield from find_all_alias(app, client)
+        aliases = yield from find_all_alias(client)
         if not aliases:
             return "No aliases registered. Register one with '/alias set @ALIAS @MENTION...'"
         else:
             return "Aliases registered: %s" % ", ".join([a['alias'] for a in aliases])
 
     @asyncio.coroutine
-    def set_alias(args):
-        try:
-            for item in args.mentions + [args.alias]:
-                validate_mention_name(item)
-        except ValueError as e:
-            return str(e)
-
-        existing = yield from find_alias(app, client, args.alias)
-        if existing and 'webhook_url' in existing:
-            yield from client.delete_webhook(app['addon'], existing['webhook_url'])
-
-        webhook_url = yield from client.post_webhook(app['addon'],
-                                                     url="%s/mention/%s" % (app['config']['BASE_URL'], args.alias),
-                                                     pattern=create_webhook_pattern(args.alias),
-                                                     name="Alias %s" % args.alias)
-        if webhook_url:
-            aliases = _aliases_db(app)
-            spec = {
-                "client_id": client.id,
-                "group_id": client.group_id,
-                "capabilities_url": client.capabilities_url,
-                "alias": args.alias
-            }
-            data = {
-                'mentions': args.mentions,
-                'webhook_url': webhook_url,
-                'room_id': args.room
-            }
-            if existing:
-                existing.update(data)
-                yield from aliases.update(spec, existing)
-            else:
-                data.update(spec)
-                yield from aliases.insert(data)
-                yield from update_glance(app, client, args.room)
-            return "Alias %s added" % args.alias
+    def set_alias_handler(args):
+        success = yield from set_alias(client, args.room, args.alias, args.mentions)
+        if success:
+            return 'Alias {} added'.format(args.alias)
         else:
-            return "Problem registering webhook"
+            return "Problem creating alias"
+
 
     @asyncio.coroutine
     def add_to(args):
         alias_text = args.alias
 
-        existing_alias = yield from find_alias(app, client, alias_text)
+        existing_alias = yield from find_alias(client, alias_text)
         if not existing_alias:
             return "The alias you're trying to update ({}) to does not exists. BETTER MESSAGE HERE".format(alias_text)
 
@@ -302,14 +321,14 @@ def _create_parser(client):
             "alias": alias_text
         }
 
-        yield from _aliases_db(app).update(spec, existing_alias)
+        yield from _aliases_db().update(spec, existing_alias)
         return "Added {} to {}".format(', '.join(new_mentions), alias_text)
 
     @asyncio.coroutine
     def remove_from(args):
         alias_text = args.alias
 
-        existing_alias = yield from find_alias(app, client, alias_text)
+        existing_alias = yield from find_alias(client, alias_text)
         if not existing_alias:
             return "The alias you're trying to update ({}) to does not exists. BETTER MESSAGE HERE".format(alias_text)
 
@@ -324,7 +343,7 @@ def _create_parser(client):
             "alias": alias_text
         }
 
-        yield from _aliases_db(app).update(spec, existing_alias)
+        yield from _aliases_db().update(spec, existing_alias)
         return "Removed {} from {}".format(', '.join(args.mentions), alias_text)
 
     @asyncio.coroutine
@@ -334,11 +353,11 @@ def _create_parser(client):
         except ValueError as e:
             return str(e)
 
-        existing = yield from find_alias(app, client, args.alias)
+        existing = yield from find_alias(client, args.alias)
         if existing and 'webhook_url' in existing:
             yield from client.delete_webhook(app['addon'], existing['webhook_url'])
-            yield from _aliases_db(app).remove(existing)
-            yield from update_glance(app, client, args.room)
+            yield from _aliases_db().remove(existing)
+            yield from update_glance(client, args.room)
             return "Alias %s deleted" % args.alias
         else:
             return "Alias %s not found" % args.alias
@@ -350,7 +369,7 @@ def _create_parser(client):
         except ValueError as e:
             return str(e)
 
-        existing = yield from find_alias(app, client, args.alias)
+        existing = yield from find_alias(client, args.alias)
         if existing and 'webhook_url' in existing:
             mentions = ['&commat;%s' % x[1:] for x in existing['mentions']]
             return HtmlNotification("Alias %s is mapped to %s" % (args.alias, ", ".join(mentions)))
@@ -363,7 +382,7 @@ def _create_parser(client):
 
     subparsers.add_parser('list', help='List existing aliases', handler=list_aliases)
 
-    parser_set = subparsers.add_parser('set', help='Sets a group mention alias', handler=set_alias)
+    parser_set = subparsers.add_parser('set', help='Sets a group mention alias', handler=set_alias_handler)
     parser_set.add_argument('alias', metavar='@ALIAS', type=str, help='The mention alias, beginning with an "@"')
     parser_set.add_argument('mentions', metavar='@MENTION', nargs='+', type=str,
                             help='The mention names, beginning with an "@"')
@@ -416,7 +435,7 @@ def validate_mention_name(mention_name: str):
     if ' ' in name:
         raise ValueError("The mention name cannot contain multiple words")
 
-def _aliases_db(app):
+def _aliases_db():
     return app['mongodb'].default_database['aliases']
 
 
@@ -426,5 +445,4 @@ app.router.add_route('GET', '/glance', get_glance)
 app.router.add_route('GET', '/alias_list', get_alias_list)
 app.router.add_route('POST', '/alias', alias)
 app.router.add_route('POST', '/mention/{alias_name}', mention)
-# app.router.add_route('GET', '/dialog', create_new_report_view)
-# app.router.add_route('GET', '/websocket', websocket_handler)
+app.router.add_route('POST', '/create', create_mention)
