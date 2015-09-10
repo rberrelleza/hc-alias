@@ -123,7 +123,7 @@ def find_all_alias(addon, client):
 
 
 def create_webhook_pattern(alias):
-    return "(?:(?:^[^/]|\/[^a]|\/a[^l]|\/ali[^a]|\/alia[^s]).*|^)%s(?:$| ).*" % alias
+    return "(?:(?:^[^/]|\/[^a]|\/a[^l]|\/ali[^a]|\/alia[^s]).*|^)%s(?:$|\W).*" % alias
 
 
 def _create_parser(client):
