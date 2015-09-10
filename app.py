@@ -1,7 +1,9 @@
 import logging
 import os
 import asyncio
-from bottle_ac import create_addon_app, RoomNotificationArgumentParser, validate_mention_name, HtmlNotification
+from bottle_ac import create_addon_app, RoomNotificationArgumentParser, validate_mention_name, \
+                                        invalid_mention_name_chars, HtmlNotification
+import re
 
 log = logging.getLogger(__name__)
 app = create_addon_app(__name__,
@@ -123,7 +125,8 @@ def find_all_alias(addon, client):
 
 
 def create_webhook_pattern(alias):
-    return "(?:(?:^[^/]|\/[^a]|\/a[^l]|\/ali[^a]|\/alia[^s]).*|^)%s(?:$|\W).*" % alias
+    return "(?:(?:^[^/]|\/[^a]|\/a[^l]|\/ali[^a]|\/alia[^s]).*|^)%s(?:$| |[%s]).*" \
+                    % (alias, re.sub(r'([\\\]-])', r'\\\1', invalid_mention_name_chars))
 
 
 def _create_parser(client):
